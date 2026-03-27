@@ -15,7 +15,7 @@ CTF instructor **·** Intern @ **Huawei** '25  **·**  Intern @ **Meta** '26
 
 **Computer Science BSc** Università di Pisa 🇮🇹  
 **Erasmus**  University of Tartu 🇪🇪  
-Currently studying, currently caffeinated.
+Currently studying, currently caffeinated
 
 
 ---
