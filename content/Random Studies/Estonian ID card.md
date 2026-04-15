@@ -1,6 +1,6 @@
 
-_These notes were developed during my Erasmus at the University of Tartu, Estonia.
-Moving beyond the theoretical framework of the course,  by deploying budget logic analyzers, I set up a home lab  to interact with the chip's internal file system and demographics, I experimented with direct APDU command execution, turning protocol theory into hands on reverse engineering practice.
+*These notes were developed during my Erasmus at the University of Tartu, Estonia.
+Moving beyond the theoretical framework of the course,  by deploying budget logic analyzers, I set up a home lab  to interact with the chip's internal file system and demographics, I experimented with direct APDU command execution, turning protocol theory into hands on reverse engineering practice.*
 
 _**Security & Privacy Note:** The ID card analyzed in this lab does not belong to me and is no longer in use. Furthermore, all sensitive personal data in the outputs has been redacted/censored for privacy reasons._
 
