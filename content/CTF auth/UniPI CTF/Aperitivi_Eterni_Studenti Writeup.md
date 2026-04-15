@@ -59,7 +59,7 @@ That is:
 3. Apply ShiftRows.
 4. XOR with round key 1 (derived from the master key by one step of key expansion).
 
-There is **no MixColumns** — meaning every output byte depends on exactly one input byte. This lack of diffusion is what makes differential cryptanalysis feasible.
+There is **no MixColumns**: meaning every output byte depends on exactly one input byte. This lack of diffusion is what makes differential cryptanalysis feasible.
 
 ## The Mathematics: Differential Cryptanalysis on 1-Round AES
 

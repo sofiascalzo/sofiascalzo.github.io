@@ -1,1 +1,0 @@
-![[Aperitivi_Eterni_Studenti Writeup]]
