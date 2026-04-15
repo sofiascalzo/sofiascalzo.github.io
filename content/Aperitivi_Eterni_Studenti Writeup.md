@@ -117,7 +117,7 @@ $$
 \prod_{i=0}^{15} |\text{candidates}_i| \;\approx\; 4^{16} = 2^{32}
 $$
 
-In practice, many positions have only 2 candidates, bringing the actual search space down to roughly $2^{16}$ — trivially brute-forceable.
+In practice, many positions have only 2 candidates, bringing the actual search space down to roughly $2^{16}$, trivially bruteforceable.
 
 ### Verification and Decryption
 
