@@ -1,5 +1,4 @@
 
-
 # A word on this space
 
 Content here is sparse by design.
