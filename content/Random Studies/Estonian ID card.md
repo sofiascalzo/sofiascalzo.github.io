@@ -6,7 +6,7 @@ _**Security & Privacy Note:** The ID card analyzed in this lab does not belong t
 
 ## Tags
 
-#cryptography #smartcards #esteid #infosec #erasmus #estonia
+#cryptography #smartcards #esteid  #erasmus #estonia
 
 ### Introduction: The "Computer" in a Card
 
