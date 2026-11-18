@@ -96,6 +96,24 @@ Modern EstEID cards use **384-bit Elliptic Curve Cryptography (ECC)**:
 
 **Note on Readers:** High-level readers can be configured via **Pseudo-APDUs**. These are commands processed by the reader itself (not the card) to control LEDs, buzzers, or timeouts.
 
+### Threat Model
+
+Smart cards exist to mediate mutual distrust. If all parties trusted each other, 
+a USB stick would suffice.
+
+Card holders cannot extract their own private keys intentionally. Without this, 
+keys would end up on GitHub within 48 hours.
+
+**Compromised PC**: the private key is safe (HSM), but signing can be hijacked. 
+The **trusted display problem** is unsolved: malware returns an error, replaces 
+the document silently, waits for the retry. Valid signature on the wrong payload.
+
+PIN firewall readers block VERIFY APDUs from the host hence the invisible retry 
+counter in the lab. They don't solve the trusted display problem.
+
+**Forged card**: the personal data file has no cryptographic integrity guarantee. 
+A Prisma kiosk reads the entire file despite needing only field 6. A programmable 
+card with forged data is undetectable by the terminal.
 ### Physical Security & Sniffing
 
 The connection between the card and the reader can be intercepted ("sniffed") using a **Logic Analyzer** (e.g., Saleae).
@@ -251,7 +269,7 @@ channel = card_service.connection
 >
 >print("[+] Selected reader:", channel.getReader())
 >
-try:
+>try:
 >	channel.connect(CardConnection.T0_protocol)
 except:
 >	channel.connect(CardConnection.T1_protocol)
@@ -289,21 +307,21 @@ card_type = ""
 >	sys.exit(1)
 >
 >table_idemia = {
-1:'Surname', 2:'First name', 3:'Sex', 4:'Citizenship',
-5:'Date & place of birth', 6:'Personal ID code', 7:'Document number',
-8:'Expiry date', 9:'Date & place of issuance', 10:'Type of residence permit',
-11:'Notes line 1', 12:'Notes line 2', 13:'Notes line 3', 14:'Notes line 4', 15:'Notes line 5'
-}
+>1:'Surname', 2:'First name', 3:'Sex', 4:'Citizenship',
+>5:'Date & place of birth', 6:'Personal ID code', 7:'Document number',
+>8:'Expiry date', 9:'Date & place of issuance', 10:'Type of residence permit',
+>11:'Notes line 1', 12:'Notes line 2', 13:'Notes line 3', 14:'Notes line 4', 15:'Notes line 5'
+>}
 >
-table_thales = {
-1:'Surname', 2:'First name', 3:'Sex', 4:'Citizenship',
-5:'Date of birth', 6:'Personal ID code', 7:'Document number',
-8:'Expiry date', 9:'Date of issuance', 10:'Authority',
-11:'Place of birth', 12:'Type of residence permit 1', 13:'Type of residence permit 2',
-14:'Type of residence permit 3', 15:'Remarks front 1', 16:'Remarks front 2',
-17:'Remarks back 1', 18:'Remarks back 2', 20:'Mission 1', 21:'Mission 2',
-22:'Position 1', 23:'Position 2'
-}
+>table_thales = {
+>1:'Surname', 2:'First name', 3:'Sex', 4:'Citizenship',
+>5:'Date of birth', 6:'Personal ID code', 7:'Document number',
+>8:'Expiry date', 9:'Date of issuance', 10:'Authority',
+>11:'Place of birth', 12:'Type of residence permit 1', 13:'Type of residence permit 2',
+>14:'Type of residence permit 3', 15:'Remarks front 1', 16:'Remarks front 2',
+>17:'Remarks back 1', 18:'Remarks back 2', 20:'Mission 1', 21:'Mission 2',
+>22:'Position 1', 23:'Position 2'
+>}
 >
 >print("\n[+] Personal data file:")
 >
@@ -324,7 +342,7 @@ table_thales = {
 >
 >
 >
-for record_id, description in active_table.items():
+>for record_id, description in active_table.items():
 >	try:
 >		send([0x00, 0xA4, 0x02, 0x0C, 0x02, 0x50, record_id])
 >		raw_data = send([0x00, 0xB0, 0x00, 0x00, 0x00])
@@ -519,4 +537,65 @@ openssl x509 -in sign.pem -inform der -text | grep 'Key Usage' -A 1
    >             TLS Web Client Authentication, E-mail Protection
   >          X509v3 Key Usage: critical
   >              Non Repudiation
-  >              
+
+## Case Study: The ROCA Fallacy
+
+> **Note:** The card used in this lab is an **IDEMIA 2018**, the final generation of the **Infineon SLE 78** platform. Its predecessor, the **Infineon JTOP 78** (widely used until 2018), belongs to the same family famously crippled by the **ROCA** vulnerability.
+
+#### What was the ROCA Vulnerability?
+
+**ROCA** (_Return of Coppersmith's Attack_, CVE-2017-15361) represents a landmark case in cryptographic history. It wasn't a flaw in the RSA algorithm itself, but a mistake in how Infineon’s library generated prime numbers.
+
+- **The Flaw:** The generated RSA moduli followed a specific mathematical pattern rather than being truly random.
+    
+- **The Impact:** This pattern allowed attackers to factorize the public key in **polynomial time** for keys up to 2048 bits.
+    
+- **The Risk:** Physical access to the smart card was never required. Since a public key is, by definition, public (and easily found in the certificates you extracted during this lab), an attacker could derive the private key remotely using only computational power.
+
+```shell
+# check whether an RSA modulus is vulnerable to ROCA
+pip install roca-detect
+roca-detect auth.der
+```
+
+Estonia revoked ~750,000 certificates in October 2017 and temporarily suspended 
+its e-voting system. It is one of the very few documented cases of mass revocation 
+of national digital certificates due to a cryptographic vulnerability.
+
+
+## Other Side Channel Attacks
+
+In smart card security there are two attack categories that require no physical 
+extraction of the card from the reader.
+
+### Passive Attacks
+
+**Power analysis**: the card has no power supply of its own,  it draws current 
+from the reader. The reader can measure instantaneous consumption and infer what 
+the chip is executing.
+
+On the previous generation of the Estonian ID card (Infineon JTOP 78), power 
+traces during the secure channel handshake show patterns distinguishable by eye: 
+APDU parsing, modular exponentiation, padding removal. With machine learning 
+applied to power traces it is possible to reconstruct the instructions being 
+executed on the chip not just the macro-operations.
+
+### Active Attacks
+
+**Fault injection**: by introducing perturbations in clock frequency or voltage 
+supply it is possible to cause controlled bit errors during execution. If a 
+memory pointer is corrupted at the right moment, the card could return data 
+from the wrong memory region, including private keys.
+
+The standard vendor recommended countermeasure: **every critical condition must 
+be checked twice**:
+
+```java
+// defensive pattern against single fault injection
+if (authenticated) {
+    if (authenticated) {  // second check: detects if the first was faulted
+        performSensitiveOperation();
+    }
+}
+```
+
